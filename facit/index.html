@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>My Terminal</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css">
+
+    <style>
+      html, body {
+          margin: 0;
+          height: 100%;
+          overflow: hidden;
+      }
+
+      #layout {
+          display: flex;
+          height: 100vh;
+      }
+
+      #sidebar {
+          width: 180px;
+          background: #222;
+          padding: 10px;
+      }
+
+      #sidebar button {
+          width: 100%;
+          margin-bottom: 10px;
+          padding: 12px;
+      }
+
+      #terminal {
+          flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div id="layout">
+
+      <div id="sidebar">
+        <button onclick="runCmd('ls')">Files</button>
+        <button onclick="runCmd('pwd')">Directory</button>
+        <button onclick="runCmd('date')">Date</button>
+        <button onclick="runCmd('clear')">Clear</button>
+      </div>
+
+      <div id="terminal"></div>
+
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
+
+    <script>
+      let term = new Terminal();
+      term.open(document.getElementById('terminal'));
+
+      let socket = new WebSocket(
+          (location.protocol === "https:" ? "wss://" : "ws://")
+              + location.host
+              + location.pathname.replace(/\/$/, '')
+      );
+
+      socket.onmessage = e => {
+          term.write(e.data);
+      };
+
+      term.onData(data => {
+          socket.send(data);
+      });
+
+
+      function runCmd(cmd) {
+          socket.send(cmd + "\r");
+      }
+    </script>
+
+  </body>
+</html>
