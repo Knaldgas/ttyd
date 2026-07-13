@@ -54,19 +54,26 @@ const flowControl = {
 } as FlowControl;
 
 export class App extends Component {
+    private terminal?: Terminal;
+
+    sendKey = (key: string) => {
+        this.terminal?.sendKey(key);
+    };
+
     render() {
         return (
-<div className="app-layout">
-   <Terminal
-                id="terminal-container"
-                wsUrl={wsUrl}
-                tokenUrl={tokenUrl}
-                clientOptions={clientOptions}
-                termOptions={termOptions}
-                flowControl={flowControl}
-   />
-   <SidePanel />
-</div>
-);
+            <div className="app-layout">
+                <Terminal
+                    ref={ref => (this.terminal = ref as Terminal)}
+                    id="terminal-container"
+                    wsUrl={wsUrl}
+                    tokenUrl={tokenUrl}
+                    clientOptions={clientOptions}
+                    termOptions={termOptions}
+                    flowControl={flowControl}
+                />
+                <SidePanel id="button-container" sendKey={this.sendKey} />
+            </div>
+        );
     }
 }

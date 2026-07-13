@@ -56,4 +56,9 @@ export class Terminal extends Component<Props, State> {
         const files = (event.target as HTMLInputElement).files;
         if (files) this.xterm.sendFile(files);
     }
+
+    @bind
+    public sendKey(key: string) {
+        this.xterm.sendData(key);
+    }
 }
