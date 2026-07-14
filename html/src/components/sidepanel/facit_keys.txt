@@ -1,0 +1,28 @@
+			Normal			Shift			Esc			Ctrl			Esc+Ctrl		Esc+Shift
+Debug		F1	Run			Execute			Run local		Step			Task display
+Debug		F2	Show Source		Break			Activate		Remove breaks		Show breaks
+Debug		F3	Put			Catch			Propagate		Stack			Modify
+
+Traverse	F4	Definition		Definition in place	Enclosing library	Enclosing		Enclosing in place
+Help		F5	Help on help		Help			Help windows		Help in key		Show access list
+Promote		F6	Install Unit		Code Unit		Install (This World)	Code (This World)	Code (All Worlds)
+Demote		F7	Edit			Demote			Source (This World)	Source Unit		Withdraw Unit
+Create		F8	Create Command		Create Body		Create Directory	Create Test		Create World
+
+Misc.		F9	Other Part		Other Part in place	Show usage (Unit)	Show usage		Create Prvate
+Misc.		F10	Semanticize		Show Errors		Underlines Off		Show unused (Unit)	Show unused
+Jobs		F11	Print			Job enable		Job connect		Job kill		Job disable
+Info.		F12	What Time		What Load		What Users		What Object		What Locks
+
+Insert line	Object
+Delete line	Region
+Erase		Window
+Insert char	Promote
+Home		Complete
+Delete char	Format
+PF1		Image
+PF2		Line
+PF3		Word
+PF4		Mark
+
+F1	F2	F3	F4	F5	F6	F7	F8	F9	F10	F11	F12
