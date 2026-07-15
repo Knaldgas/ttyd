@@ -1,6 +1,7 @@
 import { h, Component } from 'preact';
-import { loadPFConfig } from './storage';
 import type { PFButton, PFConfig } from './config';
+import { loadPFConfig, savePFConfig } from './storage';
+import { ButtonDialog } from './dialog';
 
 interface Props {
     id?: string;
@@ -12,16 +13,21 @@ interface State {
     ctrl: boolean;
     alt: boolean;
     configuring: boolean;
+    dialog?: {
+        mode: 'normal' | 'shift' | 'ctrl' | 'alt';
+        index: number;
+    };
 }
 
 export class SidePanel extends Component<Props, State> {
     private config: PFConfig;
 
-    state = {
+    state: State = {
         shift: false,
         ctrl: false,
         alt: false,
         configuring: false,
+        dialog: undefined,
     };
 
     constructor(props: Props) {
@@ -33,12 +39,14 @@ export class SidePanel extends Component<Props, State> {
         window.addEventListener('keydown', this.onKeyDown);
         window.addEventListener('keyup', this.onKeyUp);
         window.addEventListener('keydown', this.onShortcut, true);
+        window.addEventListener('keydown', this.onEscape);
     }
 
     componentWillUnmount() {
         window.removeEventListener('keydown', this.onKeyDown);
         window.removeEventListener('keyup', this.onKeyUp);
         window.removeEventListener('keydown', this.onShortcut, true);
+        window.removeEventListener('keydown', this.onEscape);
     }
 
     onKeyDown = (e: KeyboardEvent) => {
@@ -58,6 +66,8 @@ export class SidePanel extends Component<Props, State> {
     };
 
     onShortcut = (e: KeyboardEvent) => {
+        if (this.state.configuring || this.state.dialog) return;
+
         const buttons = [...this.config.normal, ...this.config.shift, ...this.config.ctrl, ...this.config.alt];
 
         const button = buttons.find(b => {
@@ -81,6 +91,12 @@ export class SidePanel extends Component<Props, State> {
         }
     };
 
+    onEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            this.setState({ configuring: false, dialog: undefined });
+        }
+    };
+
     getCurrentMode(): 'normal' | 'shift' | 'ctrl' | 'alt' {
         const { shift, ctrl, alt } = this.state;
 
@@ -96,13 +112,17 @@ export class SidePanel extends Component<Props, State> {
     }
 
     configureButton(mode: 'normal' | 'shift' | 'ctrl' | 'alt', index: number) {
-        console.log(mode);
-        console.log(index);
+        this.setState({ dialog: { mode, index } });
     }
+
+    toggleConfigure = () => {
+        this.setState({ configuring: !this.state.configuring, dialog: undefined });
+    };
 
     render({ id }: Props) {
         const buttons = this.getButtons();
         const mode = this.getCurrentMode();
+        const dialog = this.state.dialog;
 
         return (
             <div id={id} tabIndex={-1}>
@@ -112,9 +132,7 @@ export class SidePanel extends Component<Props, State> {
                     aria-pressed={this.state.configuring}
                     onMouseDown={e => {
                         e.preventDefault();
-                        this.setState({
-                            configuring: !this.state.configuring,
-                        });
+                        this.toggleConfigure();
                     }}
                 >
                     Configure Buttons
@@ -134,6 +152,22 @@ export class SidePanel extends Component<Props, State> {
                         {button.label}
                     </button>
                 ))}
+                {dialog && (
+                    <ButtonDialog
+                        title={'Reconfigure ' + this.config[dialog.mode][dialog.index].label}
+                        button={this.config[dialog.mode][dialog.index]}
+                        onSave={button => {
+                            this.config[dialog.mode][dialog.index] = button;
+                            savePFConfig(this.config);
+
+                            this.setState({ dialog: undefined });
+                            this.forceUpdate();
+                        }}
+                        onCancel={() => {
+                            this.setState({ dialog: undefined });
+                        }}
+                    />
+                )}
             </div>
         );
     }
