@@ -11,6 +11,7 @@ interface State {
     shift: boolean;
     ctrl: boolean;
     alt: boolean;
+    configuring: boolean;
 }
 
 export class SidePanel extends Component<Props, State> {
@@ -20,6 +21,7 @@ export class SidePanel extends Component<Props, State> {
         shift: false,
         ctrl: false,
         alt: false,
+        configuring: false,
     };
 
     constructor(props: Props) {
@@ -79,27 +81,54 @@ export class SidePanel extends Component<Props, State> {
         }
     };
 
-    getButtons(): PFButton[] {
+    getCurrentMode(): 'normal' | 'shift' | 'ctrl' | 'alt' {
         const { shift, ctrl, alt } = this.state;
 
-        if (ctrl) return this.config.ctrl;
-        if (shift) return this.config.shift;
-        if (alt) return this.config.alt;
+        if (ctrl) return 'ctrl';
+        if (shift) return 'shift';
+        if (alt) return 'alt';
 
-        return this.config.normal;
+        return 'normal';
+    }
+
+    getButtons(): PFButton[] {
+        return this.config[this.getCurrentMode()];
+    }
+
+    configureButton(mode: 'normal' | 'shift' | 'ctrl' | 'alt', index: number) {
+        console.log(mode);
+        console.log(index);
     }
 
     render({ id }: Props) {
         const buttons = this.getButtons();
+        const mode = this.getCurrentMode();
 
         return (
-            <div id={id} tabindex={-1}>
-                {buttons.map(button => (
+            <div id={id} tabIndex={-1}>
+                <button
+                    tabIndex={-1}
+                    className={this.state.configuring ? 'active' : ''}
+                    aria-pressed={this.state.configuring}
+                    onMouseDown={e => {
+                        e.preventDefault();
+                        this.setState({
+                            configuring: !this.state.configuring,
+                        });
+                    }}
+                >
+                    Configure Buttons
+                </button>
+                {buttons.map((button, index) => (
                     <button
                         tabIndex={-1}
                         onMouseDown={e => {
                             e.preventDefault();
-                            this.props.sendKey(button.sequence);
+                            if (this.state.configuring) {
+                                this.configureButton(mode, index);
+                            } else {
+                                this.props.sendKey(button.sequence);
+                            }
                         }}
                     >
                         {button.label}

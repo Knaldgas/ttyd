@@ -26,3 +26,8 @@ body {
   padding: 5px;
   gap: 5px;
 }
+
+#button-container button.active {
+  font-weight: bold;
+  border: 2px inset;
+}
