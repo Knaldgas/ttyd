@@ -30,11 +30,13 @@ export class SidePanel extends Component<Props, State> {
     componentDidMount() {
         window.addEventListener('keydown', this.onKeyDown);
         window.addEventListener('keyup', this.onKeyUp);
+        window.addEventListener('keydown', this.onShortcut, true);
     }
 
     componentWillUnmount() {
         window.removeEventListener('keydown', this.onKeyDown);
         window.removeEventListener('keyup', this.onKeyUp);
+        window.removeEventListener('keydown', this.onShortcut, true);
     }
 
     onKeyDown = (e: KeyboardEvent) => {
@@ -53,6 +55,30 @@ export class SidePanel extends Component<Props, State> {
         });
     };
 
+    onShortcut = (e: KeyboardEvent) => {
+        const buttons = [...this.config.normal, ...this.config.shift, ...this.config.ctrl, ...this.config.alt];
+
+        const button = buttons.find(b => {
+            const s = b.shortcut;
+
+            if (!s) return false;
+
+            return (
+                e.key === s.key &&
+                !!e.ctrlKey === !!s.ctrl &&
+                !!e.shiftKey === !!s.shift &&
+                !!e.altKey === !!s.alt &&
+                !!e.metaKey === !!s.meta
+            );
+        });
+
+        if (button) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.props.sendKey(button.sequence);
+        }
+    };
+
     getButtons(): PFButton[] {
         const { shift, ctrl, alt } = this.state;
 
@@ -67,9 +93,17 @@ export class SidePanel extends Component<Props, State> {
         const buttons = this.getButtons();
 
         return (
-            <div id={id}>
+            <div id={id} tabindex={-1}>
                 {buttons.map(button => (
-                    <button onClick={() => this.props.sendKey(button.sequence)}>{button.label}</button>
+                    <button
+                        tabIndex={-1}
+                        onMouseDown={e => {
+                            e.preventDefault();
+                            this.props.sendKey(button.sequence);
+                        }}
+                    >
+                        {button.label}
+                    </button>
                 ))}
             </div>
         );

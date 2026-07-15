@@ -1,6 +1,15 @@
+export interface Shortcut {
+    key: string;
+    ctrl?: boolean;
+    shift?: boolean;
+    alt?: boolean;
+    meta?: boolean;
+}
+
 export interface PFButton {
     label: string;
     sequence: string;
+    shortcut?: Shortcut;
 }
 
 export interface PFConfig {
@@ -12,7 +21,7 @@ export interface PFConfig {
 
 export const defaultPFConfig: PFConfig = {
     normal: [
-        { label: 'PF1', sequence: '\x1bOP' },
+        { label: 'PF1', sequence: '\x1bOP', shortcut: { key: 'F1' } },
         { label: 'PF2', sequence: '\x1bOQ' },
         { label: 'PF3', sequence: '\x1bOR' },
         { label: 'PF4', sequence: '\x1bOS' },
