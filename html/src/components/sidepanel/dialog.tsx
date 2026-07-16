@@ -1,5 +1,6 @@
 import { h, Component } from 'preact';
 import type { PFButton, Shortcut } from './config';
+import { decodeSequence, encodeSequence } from './sequence';
 
 interface Props {
     button: PFButton;
@@ -10,32 +11,31 @@ interface Props {
 
 interface State {
     label: string;
-    sequence: string;
+    sequenceText: string;
     shortcut?: Shortcut;
     listening: boolean;
 }
 
 export class ButtonDialog extends Component<Props, State> {
+    private shortcutButton?: HTMLButtonElement;
+
     state: State = {
         label: this.props.button.label,
-        sequence: this.props.button.sequence,
+        sequenceText: decodeSequence(this.props.button.sequence),
         shortcut: this.props.button.shortcut,
         listening: false,
     };
-
-    componentDidMount() {
-        window.addEventListener('keydown', this.onShortcut);
-    }
-
-    componentWillUnmount() {
-        window.removeEventListener('keydown', this.onShortcut);
-    }
 
     onShortcut = (e: KeyboardEvent) => {
         if (!this.state.listening) return;
 
         e.preventDefault();
         e.stopPropagation();
+
+        // Ignore modifier keys by themselves.
+        if (e.key === 'Control' || e.key === 'Shift' || e.key === 'Alt' || e.key === 'Meta') {
+            return;
+        }
 
         this.setState({
             shortcut: {
@@ -52,7 +52,7 @@ export class ButtonDialog extends Component<Props, State> {
     save = () => {
         this.props.onSave({
             label: this.state.label,
-            sequence: this.state.sequence,
+            sequence: encodeSequence(this.state.sequenceText),
             shortcut: this.state.shortcut,
         });
     };
@@ -93,38 +93,40 @@ export class ButtonDialog extends Component<Props, State> {
                 <label>
                     Sequence:
                     <input
-                        value={this.state.sequence}
-                        onInput={e =>
-                            this.setState({
-                                sequence: (e.target as HTMLInputElement).value,
-                            })
-                        }
+                        value={this.state.sequenceText}
+                        onInput={e => this.setState({ sequenceText: (e.target as HTMLInputElement).value })}
                     />
                 </label>
 
                 <label>
                     Shortcut:
-                    <button
-                        type="button"
-                        onMouseDown={e => {
-                            e.preventDefault();
-                            this.setState({ listening: true });
-                        }}
-                    >
-                        {this.state.listening ? 'Press shortcut...' : this.shortcutText()}
-                    </button>
-                    <button
-                        type="button"
-                        onMouseDown={e => {
-                            e.preventDefault();
-                            this.clearShortcut();
-                        }}
-                    >
-                        Clear
-                    </button>
+                    <div className="shortcut-buttons">
+                        <button
+                            ref={b => (this.shortcutButton = b as HTMLButtonElement)}
+                            type="button"
+                            onMouseDown={e => {
+                                e.preventDefault();
+                                this.setState({ listening: true }, () => {
+                                    this.shortcutButton?.focus();
+                                });
+                            }}
+                            onKeyDown={this.onShortcut}
+                        >
+                            {this.state.listening ? 'Press shortcut...' : this.shortcutText()}
+                        </button>
+                        <button
+                            type="button"
+                            onMouseDown={e => {
+                                e.preventDefault();
+                                this.clearShortcut();
+                            }}
+                        >
+                            Clear
+                        </button>
+                    </div>
                 </label>
 
-                <div>
+                <div className="save-cancel-buttons">
                     <button
                         type="button"
                         onMouseDown={e => {

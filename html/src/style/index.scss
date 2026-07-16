@@ -47,3 +47,18 @@ body {
 
   z-index: 1000;
 }
+
+.button-dialog label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+  gap: 4px;
+}
+
+.button-dialog .save-cancel-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 15px;
+}
+

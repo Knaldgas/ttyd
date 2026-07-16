@@ -66,7 +66,7 @@ export class SidePanel extends Component<Props, State> {
     };
 
     onShortcut = (e: KeyboardEvent) => {
-        if (this.state.configuring || this.state.dialog) return;
+        if (this.state.dialog) return;
 
         const buttons = [...this.config.normal, ...this.config.shift, ...this.config.ctrl, ...this.config.alt];
 
@@ -93,7 +93,9 @@ export class SidePanel extends Component<Props, State> {
 
     onEscape = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
-            this.setState({ configuring: false, dialog: undefined });
+            this.setState({ dialog: undefined }, () => {
+                window.term?.focus();
+            });
         }
     };
 
@@ -117,6 +119,47 @@ export class SidePanel extends Component<Props, State> {
 
     toggleConfigure = () => {
         this.setState({ configuring: !this.state.configuring, dialog: undefined });
+    };
+
+    saveJson = () => {
+        const blob = new Blob([JSON.stringify(this.config, null, 2)], { type: 'application/json' });
+
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ttyd-buttons.json';
+        a.click();
+
+        URL.revokeObjectURL(url);
+    };
+
+    loadJson = () => {
+        const input = document.createElement('input');
+
+        input.type = 'file';
+        input.accept = 'application/json';
+
+        input.onchange = () => {
+            const file = input.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                try {
+                    this.config = JSON.parse(reader.result as string);
+                    savePFConfig(this.config);
+                    this.forceUpdate();
+                } catch {
+                    alert('Invalid button configuration');
+                }
+            };
+
+            reader.readAsText(file);
+        };
+
+        input.click();
     };
 
     render({ id }: Props) {
@@ -154,19 +197,47 @@ export class SidePanel extends Component<Props, State> {
                 ))}
                 {dialog && (
                     <ButtonDialog
+                        key={`${dialog.mode}:${dialog.index}`}
                         title={'Reconfigure ' + this.config[dialog.mode][dialog.index].label}
                         button={this.config[dialog.mode][dialog.index]}
                         onSave={button => {
                             this.config[dialog.mode][dialog.index] = button;
                             savePFConfig(this.config);
 
-                            this.setState({ dialog: undefined });
+                            this.setState({ dialog: undefined }, () => {
+                                window.term?.focus();
+                            });
                             this.forceUpdate();
                         }}
                         onCancel={() => {
-                            this.setState({ dialog: undefined });
+                            this.setState({ dialog: undefined }, () => {
+                                window.term?.focus();
+                            });
                         }}
                     />
+                )}
+                {this.state.configuring && (
+                    <div>
+                        <button
+                            tabIndex={-1}
+                            onMouseDown={e => {
+                                e.preventDefault();
+                                this.saveJson();
+                            }}
+                        >
+                            Save to json
+                        </button>
+
+                        <button
+                            tabIndex={-1}
+                            onMouseDown={e => {
+                                e.preventDefault();
+                                this.loadJson();
+                            }}
+                        >
+                            Load from json
+                        </button>
+                    </div>
                 )}
             </div>
         );
