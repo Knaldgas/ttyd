@@ -49,6 +49,12 @@ export class SidePanel extends Component<Props, State> {
         window.removeEventListener('keydown', this.onEscape);
     }
 
+    focusTerminal = () => {
+        setTimeout(() => {
+            window.term?.focus();
+        }, 0);
+    };
+
     onKeyDown = (e: KeyboardEvent) => {
         this.setState({
             shift: e.shiftKey,
@@ -132,6 +138,7 @@ export class SidePanel extends Component<Props, State> {
         a.click();
 
         URL.revokeObjectURL(url);
+        this.focusTerminal();
     };
 
     loadJson = () => {
@@ -142,7 +149,10 @@ export class SidePanel extends Component<Props, State> {
 
         input.onchange = () => {
             const file = input.files?.[0];
-            if (!file) return;
+            if (!file) {
+                this.focusTerminal();
+                return;
+            }
 
             const reader = new FileReader();
 
@@ -154,6 +164,7 @@ export class SidePanel extends Component<Props, State> {
                 } catch {
                     alert('Invalid button configuration');
                 }
+                this.focusTerminal();
             };
 
             reader.readAsText(file);
@@ -168,7 +179,7 @@ export class SidePanel extends Component<Props, State> {
         const dialog = this.state.dialog;
 
         return (
-            <div id={id} tabIndex={-1}>
+            <div id={id} tabIndex={-1} onMouseDown={e => e.preventDefault()}>
                 <button
                     tabIndex={-1}
                     className={this.state.configuring ? 'active' : ''}
