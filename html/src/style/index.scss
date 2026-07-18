@@ -27,6 +27,10 @@ body {
   gap: 5px;
 }
 
+#button-container button {
+    user-select: none;
+}
+
 #button-container button.config-on {
   background: #e6eefc;
   font-weight: bold;

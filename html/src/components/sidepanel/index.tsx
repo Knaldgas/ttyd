@@ -99,9 +99,7 @@ export class SidePanel extends Component<Props, State> {
 
     onEscape = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
-            this.setState({ dialog: undefined }, () => {
-                window.term?.focus();
-            });
+            this.closeDialog();
         }
     };
 
@@ -123,8 +121,16 @@ export class SidePanel extends Component<Props, State> {
     }
 
     configureButton(mode: 'normal' | 'shift' | 'ctrl' | 'alt' | 'ctrlShift' | 'ctrlAlt' | 'shiftAlt', index: number) {
-        this.setState({ dialog: { mode, index } });
+        this.setState({ dialog: { mode, index } }, () => {
+            /* dialog takes focus */
+        });
     }
+
+    closeDialog = () => {
+        this.setState({ dialog: undefined }, () => {
+            window.term?.focus();
+        });
+    };
 
     toggleConfigure = () => {
         this.setState({ configuring: !this.state.configuring, dialog: undefined });
@@ -268,15 +274,11 @@ export class SidePanel extends Component<Props, State> {
                             this.config[dialog.mode][dialog.index] = button;
                             savePFConfig(this.config);
 
-                            this.setState({ dialog: undefined }, () => {
-                                window.term?.focus();
-                            });
+                            this.closeDialog();
                             this.forceUpdate();
                         }}
                         onCancel={() => {
-                            this.setState({ dialog: undefined }, () => {
-                                window.term?.focus();
-                            });
+                            this.closeDialog();
                         }}
                     />
                 )}

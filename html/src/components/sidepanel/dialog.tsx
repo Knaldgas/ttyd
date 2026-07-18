@@ -17,6 +17,7 @@ interface State {
 }
 
 export class ButtonDialog extends Component<Props, State> {
+    private sequenceInput?: HTMLInputElement;
     private shortcutButton?: HTMLButtonElement;
 
     state: State = {
@@ -26,8 +27,23 @@ export class ButtonDialog extends Component<Props, State> {
         listening: false,
     };
 
+    componentDidMount() {
+        window.addEventListener('keydown', this.onShortcut);
+
+        setTimeout(() => {
+            this.sequenceInput?.focus();
+        }, 0);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('keydown', this.onShortcut);
+    }
+
     onShortcut = (e: KeyboardEvent) => {
         if (!this.state.listening) return;
+        if (e.repeat || e.key === 'Control' || e.key === 'Shift' || e.key === 'Alt' || e.key === 'Meta') {
+            return;
+        }
 
         e.preventDefault();
         e.stopPropagation();
@@ -93,6 +109,7 @@ export class ButtonDialog extends Component<Props, State> {
                 <label>
                     Sequence:
                     <input
+                        ref={e => (this.sequenceInput = e as HTMLInputElement)}
                         value={this.state.sequenceText}
                         onInput={e => this.setState({ sequenceText: (e.target as HTMLInputElement).value })}
                     />
@@ -102,7 +119,6 @@ export class ButtonDialog extends Component<Props, State> {
                     Shortcut:
                     <div className="shortcut-buttons">
                         <button
-                            ref={b => (this.shortcutButton = b as HTMLButtonElement)}
                             type="button"
                             onMouseDown={e => {
                                 e.preventDefault();
@@ -110,7 +126,6 @@ export class ButtonDialog extends Component<Props, State> {
                                     this.shortcutButton?.focus();
                                 });
                             }}
-                            onKeyDown={this.onShortcut}
                         >
                             {this.state.listening ? 'Press shortcut...' : this.shortcutText()}
                         </button>

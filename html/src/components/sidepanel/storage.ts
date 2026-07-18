@@ -21,7 +21,7 @@ export function savePFConfig(config: PFConfig): void {
 }
 
 export function resetPFConfig(): PFConfig {
-    const config = structuredClone(defaultPFConfig);
+    const config = JSON.parse(JSON.stringify(defaultPFConfig)) as PFConfig;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
     return config;
 }
