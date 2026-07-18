@@ -1,6 +1,6 @@
 import { h, Component } from 'preact';
 import type { PFButton, PFConfig } from './config';
-import { loadPFConfig, savePFConfig } from './storage';
+import { loadPFConfig, savePFConfig, resetPFConfig } from './storage';
 import { ButtonDialog } from './dialog';
 
 interface Props {
@@ -14,7 +14,7 @@ interface State {
     alt: boolean;
     configuring: boolean;
     dialog?: {
-        mode: 'normal' | 'shift' | 'ctrl' | 'alt';
+        mode: 'normal' | 'shift' | 'ctrl' | 'alt' | 'ctrlShift' | 'ctrlAlt' | 'shiftAlt';
         index: number;
     };
 }
@@ -105,9 +105,12 @@ export class SidePanel extends Component<Props, State> {
         }
     };
 
-    getCurrentMode(): 'normal' | 'shift' | 'ctrl' | 'alt' {
+    getCurrentMode(): 'normal' | 'shift' | 'ctrl' | 'alt' | 'ctrlShift' | 'ctrlAlt' | 'shiftAlt' {
         const { shift, ctrl, alt } = this.state;
 
+        if (ctrl && shift) return 'ctrlShift';
+        if (ctrl && alt) return 'ctrlAlt';
+        if (shift && alt) return 'shiftAlt';
         if (ctrl) return 'ctrl';
         if (shift) return 'shift';
         if (alt) return 'alt';
@@ -119,7 +122,7 @@ export class SidePanel extends Component<Props, State> {
         return this.config[this.getCurrentMode()];
     }
 
-    configureButton(mode: 'normal' | 'shift' | 'ctrl' | 'alt', index: number) {
+    configureButton(mode: 'normal' | 'shift' | 'ctrl' | 'alt' | 'ctrlShift' | 'ctrlAlt' | 'shiftAlt', index: number) {
         this.setState({ dialog: { mode, index } });
     }
 
@@ -173,6 +176,22 @@ export class SidePanel extends Component<Props, State> {
         input.click();
     };
 
+    resetConfig = () => {
+        if (!confirm('Reset all buttons to their default configuration?')) {
+            return;
+        }
+
+        this.config = resetPFConfig();
+
+        this.setState({
+            dialog: undefined,
+            configuring: false,
+        });
+
+        this.forceUpdate();
+        this.focusTerminal();
+    };
+
     render({ id }: Props) {
         const buttons = this.getButtons();
         const mode = this.getCurrentMode();
@@ -182,17 +201,51 @@ export class SidePanel extends Component<Props, State> {
             <div id={id} tabIndex={-1} onMouseDown={e => e.preventDefault()}>
                 <button
                     tabIndex={-1}
-                    className={this.state.configuring ? 'active' : ''}
+                    className={this.state.configuring ? 'config-on' : 'config-off'}
                     aria-pressed={this.state.configuring}
                     onMouseDown={e => {
                         e.preventDefault();
                         this.toggleConfigure();
                     }}
                 >
-                    Configure Buttons
+                    ⚙ Configure buttons
                 </button>
+                {this.state.configuring && (
+                    <div>
+                        <button
+                            tabIndex={-1}
+                            onMouseDown={e => {
+                                e.preventDefault();
+                                this.saveJson();
+                            }}
+                        >
+                            Save json
+                        </button>
+
+                        <button
+                            tabIndex={-1}
+                            onMouseDown={e => {
+                                e.preventDefault();
+                                this.loadJson();
+                            }}
+                        >
+                            Load json
+                        </button>
+
+                        <button
+                            tabIndex={-1}
+                            onMouseDown={e => {
+                                e.preventDefault();
+                                this.resetConfig();
+                            }}
+                        >
+                            To default
+                        </button>
+                    </div>
+                )}
                 {buttons.map((button, index) => (
                     <button
+                        className={index % 4 === 0 ? 'pf-group-first' : 'pf-group-other'}
                         tabIndex={-1}
                         onMouseDown={e => {
                             e.preventDefault();
@@ -226,29 +279,6 @@ export class SidePanel extends Component<Props, State> {
                             });
                         }}
                     />
-                )}
-                {this.state.configuring && (
-                    <div>
-                        <button
-                            tabIndex={-1}
-                            onMouseDown={e => {
-                                e.preventDefault();
-                                this.saveJson();
-                            }}
-                        >
-                            Save to json
-                        </button>
-
-                        <button
-                            tabIndex={-1}
-                            onMouseDown={e => {
-                                e.preventDefault();
-                                this.loadJson();
-                            }}
-                        >
-                            Load from json
-                        </button>
-                    </div>
                 )}
             </div>
         );

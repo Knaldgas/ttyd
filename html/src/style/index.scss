@@ -27,9 +27,23 @@ body {
   gap: 5px;
 }
 
-#button-container button.active {
+#button-container button.config-on {
+  background: #e6eefc;
   font-weight: bold;
   border: 2px inset;
+  margin-bottom: 12px;
+}
+
+#button-container button.config-off {
+  background: #e6eefc;
+  margin-bottom: 12px;
+}
+
+#button-container button.pf-group-first {
+    margin-top: 12px;
+}
+
+#button-container button.pf-group-other {
 }
 
 .button-dialog {
