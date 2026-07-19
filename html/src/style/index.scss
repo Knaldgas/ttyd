@@ -27,6 +27,30 @@ body {
   gap: 5px;
 }
 
+.pf-grid {
+    display: flex;
+    gap: 8px;
+}
+
+.pf-column {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pf-header {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.pf-group-first {
+    margin-top: 12px;
+}
+
+.pf-group-other {
+}
+
 #button-container button {
     user-select: none;
 }
@@ -41,13 +65,6 @@ body {
 #button-container button.config-off {
   background: #e6eefc;
   margin-bottom: 12px;
-}
-
-#button-container button.pf-group-first {
-    margin-top: 12px;
-}
-
-#button-container button.pf-group-other {
 }
 
 .button-dialog {
@@ -79,4 +96,3 @@ body {
   gap: 8px;
   margin-top: 15px;
 }
-

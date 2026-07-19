@@ -14,6 +14,7 @@ interface State {
     sequenceText: string;
     shortcut?: Shortcut;
     listening: boolean;
+    hidden: boolean;
 }
 
 export class ButtonDialog extends Component<Props, State> {
@@ -25,6 +26,7 @@ export class ButtonDialog extends Component<Props, State> {
         sequenceText: decodeSequence(this.props.button.sequence),
         shortcut: this.props.button.shortcut,
         listening: false,
+        hidden: !!this.props.button.hidden,
     };
 
     componentDidMount() {
@@ -70,6 +72,7 @@ export class ButtonDialog extends Component<Props, State> {
             label: this.state.label,
             sequence: encodeSequence(this.state.sequenceText),
             shortcut: this.state.shortcut,
+            hidden: this.state.hidden,
         });
     };
 
@@ -113,6 +116,19 @@ export class ButtonDialog extends Component<Props, State> {
                         value={this.state.sequenceText}
                         onInput={e => this.setState({ sequenceText: (e.target as HTMLInputElement).value })}
                     />
+                </label>
+
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={this.state.hidden}
+                        onInput={e =>
+                            this.setState({
+                                hidden: (e.target as HTMLInputElement).checked,
+                            })
+                        }
+                    />
+                    Hidden
                 </label>
 
                 <label>

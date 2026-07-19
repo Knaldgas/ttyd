@@ -1,5 +1,5 @@
 import { h, Component } from 'preact';
-import type { PFButton, PFConfig } from './config';
+import type { PFConfig } from './config';
 import { loadPFConfig, savePFConfig, resetPFConfig } from './storage';
 import { ButtonDialog } from './dialog';
 
@@ -9,23 +9,33 @@ interface Props {
 }
 
 interface State {
-    shift: boolean;
-    ctrl: boolean;
-    alt: boolean;
     configuring: boolean;
     dialog?: {
-        mode: 'normal' | 'shift' | 'ctrl' | 'alt' | 'ctrlShift' | 'ctrlAlt' | 'shiftAlt';
+        mode: 'normal' | 'shift' | 'ctrl' | 'ctrlShift' | 'shiftAlt';
         index: number;
     };
 }
 
+const columns = [
+    { mode: 'normal', title: 'Normal' },
+    { mode: 'shift', title: 'Shift' },
+    { mode: 'ctrl', title: 'Ctrl' },
+    { mode: 'ctrlShift', title: 'Ctrl+Shift' },
+    { mode: 'shiftAlt', title: 'Shift+Alt' },
+] as const;
+
 export class SidePanel extends Component<Props, State> {
     private config: PFConfig;
 
+    modes: Array<'normal' | 'shift' | 'ctrl' | 'ctrlShift' | 'shiftAlt'> = [
+        'normal',
+        'shift',
+        'ctrl',
+        'ctrlShift',
+        'shiftAlt',
+    ];
+
     state: State = {
-        shift: false,
-        ctrl: false,
-        alt: false,
         configuring: false,
         dialog: undefined,
     };
@@ -36,15 +46,11 @@ export class SidePanel extends Component<Props, State> {
     }
 
     componentDidMount() {
-        window.addEventListener('keydown', this.onKeyDown);
-        window.addEventListener('keyup', this.onKeyUp);
         window.addEventListener('keydown', this.onShortcut, true);
         window.addEventListener('keydown', this.onEscape);
     }
 
     componentWillUnmount() {
-        window.removeEventListener('keydown', this.onKeyDown);
-        window.removeEventListener('keyup', this.onKeyUp);
         window.removeEventListener('keydown', this.onShortcut, true);
         window.removeEventListener('keydown', this.onEscape);
     }
@@ -55,26 +61,16 @@ export class SidePanel extends Component<Props, State> {
         }, 0);
     };
 
-    onKeyDown = (e: KeyboardEvent) => {
-        this.setState({
-            shift: e.shiftKey,
-            ctrl: e.ctrlKey,
-            alt: e.altKey,
-        });
-    };
-
-    onKeyUp = (e: KeyboardEvent) => {
-        this.setState({
-            shift: e.shiftKey,
-            ctrl: e.ctrlKey,
-            alt: e.altKey,
-        });
-    };
-
     onShortcut = (e: KeyboardEvent) => {
         if (this.state.dialog) return;
 
-        const buttons = [...this.config.normal, ...this.config.shift, ...this.config.ctrl, ...this.config.alt];
+        const buttons = [
+            ...this.config.normal,
+            ...this.config.shift,
+            ...this.config.ctrl,
+            ...this.config.ctrlShift,
+            ...this.config.shiftAlt,
+        ];
 
         const button = buttons.find(b => {
             const s = b.shortcut;
@@ -103,24 +99,7 @@ export class SidePanel extends Component<Props, State> {
         }
     };
 
-    getCurrentMode(): 'normal' | 'shift' | 'ctrl' | 'alt' | 'ctrlShift' | 'ctrlAlt' | 'shiftAlt' {
-        const { shift, ctrl, alt } = this.state;
-
-        if (ctrl && shift) return 'ctrlShift';
-        if (ctrl && alt) return 'ctrlAlt';
-        if (shift && alt) return 'shiftAlt';
-        if (ctrl) return 'ctrl';
-        if (shift) return 'shift';
-        if (alt) return 'alt';
-
-        return 'normal';
-    }
-
-    getButtons(): PFButton[] {
-        return this.config[this.getCurrentMode()];
-    }
-
-    configureButton(mode: 'normal' | 'shift' | 'ctrl' | 'alt' | 'ctrlShift' | 'ctrlAlt' | 'shiftAlt', index: number) {
+    configureButton(mode: 'normal' | 'shift' | 'ctrl' | 'ctrlShift' | 'shiftAlt', index: number) {
         this.setState({ dialog: { mode, index } }, () => {
             /* dialog takes focus */
         });
@@ -199,12 +178,18 @@ export class SidePanel extends Component<Props, State> {
     };
 
     render({ id }: Props) {
-        const buttons = this.getButtons();
-        const mode = this.getCurrentMode();
         const dialog = this.state.dialog;
 
         return (
-            <div id={id} tabIndex={-1} onMouseDown={e => e.preventDefault()}>
+            <div
+                id={id}
+                tabIndex={-1}
+                onMouseDown={e => {
+                    if (!this.state.dialog) {
+                        e.preventDefault();
+                    }
+                }}
+            >
                 <button
                     tabIndex={-1}
                     className={this.state.configuring ? 'config-on' : 'config-off'}
@@ -225,7 +210,7 @@ export class SidePanel extends Component<Props, State> {
                                 this.saveJson();
                             }}
                         >
-                            Save json
+                            Save to json
                         </button>
 
                         <button
@@ -235,7 +220,7 @@ export class SidePanel extends Component<Props, State> {
                                 this.loadJson();
                             }}
                         >
-                            Load json
+                            Load from json
                         </button>
 
                         <button
@@ -245,26 +230,37 @@ export class SidePanel extends Component<Props, State> {
                                 this.resetConfig();
                             }}
                         >
-                            To default
+                            Reset to default
                         </button>
                     </div>
                 )}
-                {buttons.map((button, index) => (
-                    <button
-                        className={index % 4 === 0 ? 'pf-group-first' : 'pf-group-other'}
-                        tabIndex={-1}
-                        onMouseDown={e => {
-                            e.preventDefault();
-                            if (this.state.configuring) {
-                                this.configureButton(mode, index);
-                            } else {
-                                this.props.sendKey(button.sequence);
-                            }
-                        }}
-                    >
-                        {button.label}
-                    </button>
-                ))}
+                <div className="pf-grid">
+                    {columns.map(({ mode, title }) => (
+                        <div className="pf-column">
+                            <div className="pf-header">{title}</div>
+                            {this.config[mode]
+                                .map((button, index) => ({ button, index }))
+                                .filter(({ button }) => this.state.configuring || !button.hidden)
+                                .map(({ button, index }) => (
+                                    <button
+                                        className={index % 4 === 0 ? 'pf-group-first' : 'pf-group-other'}
+                                        tabIndex={-1}
+                                        onMouseDown={e => {
+                                            e.preventDefault();
+
+                                            if (this.state.configuring) {
+                                                this.configureButton(mode, index);
+                                            } else {
+                                                this.props.sendKey(button.sequence);
+                                            }
+                                        }}
+                                    >
+                                        {button.label === '' ? '_' : button.label}
+                                    </button>
+                                ))}
+                        </div>
+                    ))}
+                </div>
                 {dialog && (
                     <ButtonDialog
                         key={`${dialog.mode}:${dialog.index}`}
